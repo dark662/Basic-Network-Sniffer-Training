@@ -1,20 +1,21 @@
 # Network Sniffer
 ## Overview
-This project is a network sniffer tool implemented in Python. It captures and analyzes network traffic, providing detailed information about each packet. The tool utilizes the Npcap library for packet capture on Windows systems.
+This project is a network sniffer tool implemented in Python. It captures and analyzes network traffic, providing detailed information about each packet.
 
 ## Features
-- Captures network packets in real-time.
-- Provides detailed information about each packet, including source and destination IP addresses, protocol, packet length, time of capture, TTL, flags, and more.
-- Supports analysis of various protocols such as TCP, UDP, and ICMP.
-- Displays source and destination MAC addresses for Ethernet packets.
-- Supports capturing and analyzing fragmented IP packets.
-- Provides TCP-specific information such as sequence numbers, acknowledgment numbers, and TCP flags.
-## Installation
+ Listening and Analyzing Network Packets:
+    Once the socket is set up, the program enters a loop (while True) to listen for incoming network packets.
 
-### Install the required dependencies:
-- pip install scapy
-### Install Npcap:
-- Visit the Npcap website and download the appropriate installer for your system.
-- Run the installer and follow the installation instructions.
+  -  Parsing Ethernet Frames:
+    Upon receiving a packet, the program uses the parse_ethernet_frame function to parse the Ethernet frame header to extract information such as MAC addresses (source and destination) and the frame's protocol (e.g., IPv4).
+
+   - Parsing IPv4 Packets:
+    If the frame's protocol is IPv4 (0x0800), the program uses the parse_ipv4_packet function to parse the packet header to extract information such as source IP address, destination IP address, and the protocol (TCP or UDP).
+
+-  Parsing TCP and UDP Packets:
+    If the protocol inside the IPv4 packet is TCP (6) or UDP (17), the program uses the parse_tcp_segment or parse_udp_segment functions to extract information such as source and destination ports, and any additional data.
+
+ -   Displaying Information:
+    After parsing each packet, the program prints the extracted information to the screen, such as MAC addresses, IP addresses, and TCP or UDP ports.
 
 - ### The script will start capturing network packets and display detailed information about each packet in real-time.

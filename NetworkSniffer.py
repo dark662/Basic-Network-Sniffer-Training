@@ -11,6 +11,25 @@ def format_mac_addr(bytes_addr):
     bytes_str = map('{:02x}'.format, bytes_addr)
     return ':'.join(bytes_str).upper()
 
+# Function to parse IPv4 packets
+def parse_ipv4_packet(data):
+    version_header_length = data[0]
+    version = version_header_length >> 4
+    header_length = (version_header_length & 15) * 4
+    ttl, proto, src, target = struct.unpack('! 8x B B 2x 4s 4s', data[:20])
+    return version, header_length, ttl, proto, socket.inet_ntoa(src), socket.inet_ntoa(target), data[header_length:]
+
+# Function to parse TCP segments
+def parse_tcp_segment(data):
+    src_port, dest_port, sequence, acknowledgment, offset_reserved_flags = struct.unpack('! H H L L H', data[:14])
+    offset = (offset_reserved_flags >> 12) * 4
+    return src_port, dest_port, sequence, acknowledgment, data[offset:]
+
+# Function to parse UDP segments
+def parse_udp_segment(data):
+    src_port, dest_port, length = struct.unpack('! H H 2x H', data[:8])
+    return src_port, dest_port, length, data[8:]
+
 # Function to sniff and analyze network packets
 def sniff_packets(iface):
     # Create a raw socket and bind it to the network interface
@@ -25,20 +44,27 @@ def sniff_packets(iface):
             print(f'\nEthernet Frame:')
             print(f'Destination MAC: {dest_mac}, Source MAC: {src_mac}, Protocol: {eth_proto}')
             
-            # Add more protocols and parsing logic here (e.g., IP, TCP, UDP)
-            # Example: For IPv4
+            # Parse IPv4 packet
             if eth_proto == 0x0800:  # IPv4
-                # Parse IP header (20 bytes for IPv4)
-                version_header_length = data[0]
-                version = version_header_length >> 4
-                header_length = (version_header_length & 15) * 4
-                ttl, proto, src, target = struct.unpack('! 8x B B 2x 4s 4s', data[:20])
+                version, header_length, ttl, proto, src_ip, target_ip, data = parse_ipv4_packet(data)
                 print(f'IPv4 Packet:')
-                print(f'Source IP: {socket.inet_ntoa(src)}, Destination IP: {socket.inet_ntoa(target)}')
+                print(f'Source IP: {src_ip}, Destination IP: {target_ip}, Protocol: {proto}')
+                
+                # Parse TCP segment
+                if proto == 6:  # TCP
+                    src_port, dest_port, sequence, acknowledgment, data = parse_tcp_segment(data)
+                    print(f'TCP Segment:')
+                    print(f'Source Port: {src_port}, Destination Port: {dest_port}')
+                
+                # Parse UDP segment
+                elif proto == 17:  # UDP
+                    src_port, dest_port, length, data = parse_udp_segment(data)
+                    print(f'UDP Segment:')
+                    print(f'Source Port: {src_port}, Destination Port: {dest_port}')
 
     except KeyboardInterrupt:
         print("\nShutting down.")
         sock.close()
 
 if __name__ == "__main__":
-    sniff_packets('eth0')  # Replace 'eth0' with your network interface
+    sniff_packets('wlan0')  # Replace 'wlan0' with your network interface
